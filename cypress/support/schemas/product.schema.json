@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "price",
+    "is_location_offer",
+    "is_rental",
+    "co2_rating",
+    "in_stock",
+    "is_eco_friendly",
+    "product_image",
+    "category",
+    "brand",
+    "specs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number"
+    },
+    "is_location_offer": {
+      "type": "boolean"
+    },
+    "is_rental": {
+      "type": "boolean"
+    },
+    "co2_rating": {
+      "type": ["string", "null"]
+    },
+    "in_stock": {
+      "type": "boolean"
+    },
+    "is_eco_friendly": {
+      "type": "boolean"
+    },
+    "product_image": {
+      "type": "object",
+      "required": ["id", "file_name", "title"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "category": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "specs": {
+      "type": "array"
+    }
+  }
+}
