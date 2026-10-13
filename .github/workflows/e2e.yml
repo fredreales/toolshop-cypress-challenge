@@ -1,0 +1,107 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TOOLSHOP_REF: ae7caecb811dd8952c09d997e69be7cb946ecd44
+
+jobs:
+  cypress:
+    name: Cypress
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
+      CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out Toolshop
+        uses: actions/checkout@v4
+        with:
+          repository: testsmith-io/practice-software-testing
+          ref: ${{ env.TOOLSHOP_REF }}
+          path: toolshop
+
+      - name: Start Toolshop
+        working-directory: toolshop
+        run: docker compose -f docker-compose.yml up -d --build
+
+      - name: Seed the database
+        working-directory: toolshop
+        run: |
+          until [ "$(docker inspect -f '{{.State.Status}}' pst-composer-1)" = "exited" ]; do sleep 5; done
+          until docker compose exec -T mariadb mysqladmin ping -uroot -proot --silent; do sleep 3; done
+          docker compose exec -T laravel-api php artisan migrate:fresh --seed
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint && npm run format:check
+
+      - name: Smoke tests
+        id: smoke
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          command: npm run test:smoke
+          wait-on: 'http://localhost:4200, http://localhost:8091/status'
+          wait-on-timeout: 600
+
+      - name: Remaining tests
+        if: ${{ !cancelled() && (success() || steps.smoke.outcome == 'failure') }}
+        run: npx cypress run --expose grepTags=-@smoke
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          retention-days: 14
+
+  prod-safe:
+    name: Prod-safe (hosted site)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
+      CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run prod-safe tests
+        run: npm run test:prod-safe
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-safe-screenshots
+          path: cypress/screenshots
+          retention-days: 14
