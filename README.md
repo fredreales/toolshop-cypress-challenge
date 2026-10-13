@@ -159,7 +159,7 @@ API calls for a role go through one command, `cy.requestAs(role, method, path, b
 
 - **Negative tests:** the admin form blocks saving with empty required fields (no `POST` is sent), and the API rejects a product with no name and a non-numeric price (`422` with field errors).
 - **API level:** the full product lifecycle (create, read, search, update, delete) with schema validation on every response, and a list format check that also runs against production. Role-based access is covered above.
-- **CI:** [.github/workflows/e2e.yml](.github/workflows/e2e.yml) starts Toolshop with Docker Compose (pinned to the commit this suite was built against), seeds the database, waits for the app and API, runs lint, then the `@smoke` tests, then everything else. The rest of the suite still runs when a smoke test fails, so every run reports the full picture. A separate job runs the `@prod-safe` tests against the hosted site, only when the workflow is started by hand from the Actions tab. Failure screenshots are uploaded as artifacts.
+- **CI:** [.github/workflows/e2e.yml](.github/workflows/e2e.yml) starts Toolshop with Docker Compose (pinned to the commit this suite was built against), seeds the database, waits for the app and API, runs lint, then the `@smoke` tests, then everything else. The rest of the suite still runs when a smoke test fails, so every run reports the full picture. Starting the workflow by hand from the Actions tab adds a **Tests to run** dropdown: `all` (the same as a push), `@smoke` (only the smoke tests), or `@prod-safe` (only the prod-safe tests, against the hosted site, without starting Docker). Failure screenshots are uploaded as artifacts.
 
 ## Assumptions
 

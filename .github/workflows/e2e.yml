@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      tags:
+        description: Tests to run
+        type: choice
+        options:
+          - all
+          - '@smoke'
+          - '@prod-safe'
+        default: all
 
 concurrency:
   group: e2e-${{ github.ref }}
@@ -16,6 +25,7 @@ env:
 jobs:
   cypress:
     name: Cypress
+    if: inputs.tags != '@prod-safe'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -52,6 +62,7 @@ jobs:
         run: |
           until [ "$(docker inspect -f '{{.State.Status}}' pst-composer-1)" = "exited" ]; do sleep 5; done
           until docker compose exec -T mariadb mysqladmin ping -uroot -proot --silent; do sleep 3; done
+          docker compose exec -T --user root laravel-api chmod -R 777 storage bootstrap/cache
           docker compose exec -T laravel-api php artisan migrate:fresh --seed
 
       - name: Smoke tests
@@ -64,8 +75,15 @@ jobs:
           wait-on-timeout: 600
 
       - name: Remaining tests
-        if: ${{ !cancelled() && (success() || steps.smoke.outcome == 'failure') }}
+        if: ${{ inputs.tags != '@smoke' && !cancelled() && (success() || steps.smoke.outcome == 'failure') }}
         run: npx cypress run --expose grepTags=-@smoke
+
+      - name: Toolshop API logs
+        if: failure()
+        working-directory: toolshop
+        run: |
+          docker compose logs --tail 50 laravel-api
+          docker compose exec -T laravel-api tail -n 50 storage/logs/laravel.log || true
 
       - name: Upload failure screenshots
         if: failure()
@@ -77,7 +95,7 @@ jobs:
 
   prod-safe:
     name: Prod-safe (hosted site)
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.tags == '@prod-safe'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
