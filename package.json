@@ -1,0 +1,30 @@
+{
+  "name": "toolshop-cypress-challenge",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "cypress run",
+    "test:smoke": "cypress run --expose grepTags=@smoke",
+    "test:prod-safe": "cypress run --config baseUrl=https://practicesoftwaretesting.com --expose apiUrl=https://api.practicesoftwaretesting.com,grepTags=@prod-safe",
+    "test:ui": "cypress run --spec 'cypress/e2e/ui/*.cy.js'",
+    "test:api": "cypress run --spec 'cypress/e2e/api/*.cy.js'",
+    "test:permissions": "cypress run --spec 'cypress/e2e/roles-permissions/*.cy.js'",
+    "open": "cypress open",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "description": "Cypress suite for the Practice Software Testing (Toolshop) app",
+  "devDependencies": {
+    "@cypress/grep": "^7.0.0",
+    "@eslint/js": "^9.39.5",
+    "@faker-js/faker": "^10.6.0",
+    "cypress": "^15.21.1",
+    "cypress-ajv-schema-validator": "^2.0.2",
+    "dotenv": "^18.0.7",
+    "eslint": "^9.39.5",
+    "eslint-plugin-cypress": "^4.3.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
+  },
+  "private": true
+}
