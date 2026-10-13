@@ -26,6 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint && npm run format:check
+
       - name: Check out Toolshop
         uses: actions/checkout@v4
         with:
@@ -43,16 +53,6 @@ jobs:
           until [ "$(docker inspect -f '{{.State.Status}}' pst-composer-1)" = "exited" ]; do sleep 5; done
           until docker compose exec -T mariadb mysqladmin ping -uroot -proot --silent; do sleep 3; done
           docker compose exec -T laravel-api php artisan migrate:fresh --seed
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - name: Lint
-        run: npm run lint && npm run format:check
 
       - name: Smoke tests
         id: smoke
